@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AROVA - AI Health Ecosystem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom styles for the app's aesthetic */
+        :root {
+            --primary: #10B981; /* Emerald */
+            --secondary: #3B82F6; /* Blue */
+            --background: #F9FAFB; /* Light Gray */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background);
+        }
+        .card {
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+        }
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            transition: background-color 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #059669; /* Darker emerald */
+        }
+        .portal-header {
+            border-bottom: 2px solid #E5E7EB;
+        }
+
+        /* Styling for the AI Chat Window */
+        #ai-chat-window {
+            height: 500px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .message-user {
+            align-self: flex-end;
+            background-color: #E0F2F1; /* Light Emerald */
+        }
+        .message-ai {
+            align-self: flex-start;
+            background-color: #F3F4F6; /* Light Gray */
+        }
+        .video-placeholder {
+            background-color: #374151; /* Dark Gray for video area */
+            height: 250px;
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        .graph-placeholder {
+            background-color: #F0F9FF; /* Very light blue background */
+            height: 200px;
+            border: 2px dashed #93C5FD; /* Light blue dashed border */
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #3B82F6; /* Blue text */
+            font-weight: 600;
+            margin-top: 1rem;
+            padding: 1rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <header class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+                <img src="https://media.discordapp.net/attachments/1401826802598678673/1424682146206843020/Untitled_design_1.png?ex=68e4d624&is=68e384a4&hm=b5ec4bf71aaedcea57722edf84d91770d6105c70eaaa582a6eca0dc09faf6dfd&=&format=webp&quality=lossless&width=930&height=930" 
+                     alt="AROVA Health Logo" 
+                     class="max-h-16 mr-3"> <span class="text-sm font-normal text-gray-500">Health Assistant</span> </h1>
+            <nav class="hidden md:flex space-x-4"> 
+                <button onclick="navigate('consumer')" class="text-gray-600 hover:text-emerald-600 font-medium transition duration-150">Consumer Dashboard</button>
+                <button onclick="navigate('doctor')" class="text-gray-600 hover:text-emerald-600 font-medium transition duration-150">Doctor Portal</button>
+                <a href="admin.html" class="text-gray-600 hover:text-indigo-600 font-medium transition duration-150 flex items-center">
+                    <span class="mr-1" data-lucide="lock" width="16" height="16"></span>
+                    Admin Panel
+                </a>
+            </nav>
+             <button class="md:hidden text-gray-600 hover:text-emerald-600" aria-label="Menu">
+                <span data-lucide="menu" width="24" height="24"></span>
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div id="portal-container">
+            </div>
+    </main>
+
+    <script>
+        // Client-side Router
+        const portalContainer = document.getElementById('portal-container');
+
+        // --- Helper Function for Icons ---
+        function getIcon(name, size = 20, classList = '') {
+            return `<span data-lucide="${name}" width="${size}" height="${size}" class="${classList}"></span>`;
+        }
+
+        // Mock chat history
+        let chatHistory = [
+            { sender: 'AI', text: 'Hello, I am your personalized health assistant. How can I help you achieve your goals today?' } // Initial message updated
+        ];
+
+        // Mock Chat Interaction Logic
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            // Add user message
+            chatHistory.push({ sender: 'User', text: message });
+
+            // Mock AI response logic (based on keywords)
+            let aiResponse = "I'm still learning! Ask me about your 'water intake', 'exercise plan', or 'calorie goal'.";
+
+            if (message.toLowerCase().includes('water')) {
+                aiResponse = "Your personalized goal is 3.5 liters today. You've logged 1.5L so far. Would you like to log another glass now?";
+            } else if (message.toLowerCase().includes('exercise')) {
+                aiResponse = "Your personalized plan recommends 30 minutes of brisk walking. Remember to use the app's camera feature to check your form!";
+            } else if (message.toLowerCase().includes('food') || message.toLowerCase().includes('calorie')) {
+                aiResponse = "Your calorie goal is 2000 kcal. You've consumed 1250 kcal. Use the 'Food Log' button to quickly scan your next meal!";
+            } else if (message.toLowerCase().includes('hygiene')) {
+                aiResponse = "Hygiene is key! Remember to brush your teeth twice a day and wash your hands before every meal. A consistent routine builds strong health.";
+            } else if (message.toLowerCase().includes('sms')) {
+                aiResponse = "To log data via SMS, send: LOG FOOD [code] or LOG WATER 500. The server will reply with a confirmation code!";
+            }
+
+
+            // Add AI response
+            setTimeout(() => {
+                chatHistory.push({ sender: 'AI', text: aiResponse });
+                renderChatWindow();
+                // Scroll to bottom
+                const chatWindow = document.getElementById('ai-chat-window');
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }, 500);
+
+            input.value = '';
+            renderChatWindow();
+            // Scroll to bottom immediately after user sends message
+            const chatWindow = document.getElementById('ai-chat-window');
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        function renderChatWindow() {
+            const chatWindow = document.getElementById('ai-chat-window');
+            if (!chatWindow) return; // Exit if not on consumer portal
+
+            chatWindow.innerHTML = chatHistory.map(msg => `
+                <div class="mb-3 p-3 max-w-[80%] rounded-lg shadow-sm ${msg.sender === 'User' ? 'message-user' : 'message-ai'}">
+                    <p class="font-semibold text-sm ${msg.sender === 'User' ? 'text-gray-800' : 'text-emerald-700'}">${msg.sender}</p>
+                    <p class="text-gray-700">${msg.text}</p>
+                </div>
+            `).join('');
+        }
+
+        // 1. Consumer Dashboard (Mobile-Optimized)
+        function renderConsumerPortal() {
+            portalContainer.innerHTML = `
+                <div class="card portal-header mb-8">
+                    <h2 class="text-3xl font-bold text-gray-800 flex items-center">
+                        ${getIcon('activity', 28, 'mr-3 text-emerald-600')} My Daily Health Dashboard </h2>
+                    <p class="text-gray-500 mt-2">Personalized progress, daily tasks, and direct access to your AI Health Assistant. <span class="font-mono text-xs bg-gray-100 p-1 rounded">User ID: U-934C-23T4-L7D</span></p> </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-6 gap-6">
+                    
+                    <div class="space-y-6 lg:col-span-3">
+
+                        <div class="card border-l-4 border-blue-500">
+                            <h3 class="font-bold text-xl mb-4 text-blue-600 flex items-center">${getIcon('trending-up', 20, 'mr-2')} Health Visualization (Weekly Trend)</h3> <div class="graph-placeholder">
+                                Placeholder for Interactive Chart (e.g., Water Intake, Calorie Balance, or Sleep)
+                            </div>
+                            <div class="mt-4 grid grid-cols-3 gap-2">
+                                <button class="bg-blue-100 text-blue-700 py-2 rounded-lg text-sm hover:bg-blue-200">${getIcon('droplet', 16, 'inline mr-1')} Water</button>
+                                <button class="bg-red-100 text-red-700 py-2 rounded-lg text-sm hover:bg-red-200">${getIcon('heart-pulse', 16, 'inline mr-1')} Calories</button>
+                                <button class="bg-yellow-100 text-yellow-700 py-2 rounded-lg text-sm hover:bg-yellow-200">${getIcon('zap', 16, 'inline mr-1')} Exercise</button>
+                            </div>
+                        </div>
+
+                        <div class="card border-l-4 border-emerald-500">
+                            <h3 class="font-bold text-xl mb-4 text-emerald-600 flex items-center">${getIcon('plus-circle', 20, 'mr-2')} Quick Log (Mobile Sync)</h3>
+                            <div class="space-y-3">
+                                <button class="w-full bg-emerald-100 text-emerald-700 py-3 rounded-lg font-semibold hover:bg-emerald-200 transition flex items-center justify-center">
+                                    ${getIcon('camera', 20, 'mr-2')} Log Food (Scan/Image Upload)
+                                </button>
+                                <div class="flex space-x-2">
+                                    <input type="number" placeholder="Water in ml (e.g., 500)" class="w-2/3 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                    <button class="w-1/3 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+                                        Log Water
+                                    </button>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2 text-center">Data syncs automatically or via offline SMS code.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card lg:col-span-3">
+                        <h3 class="font-bold text-xl mb-4 text-gray-800 flex items-center">
+                            ${getIcon('bot', 20, 'mr-2')} AI Health Assistant </h3>
+                        <div id="ai-chat-window" class="border rounded-lg p-4 bg-gray-50 mb-4 space-y-3">
+                            </div>
+                        <div class="flex space-x-3">
+                            <input type="text" id="chat-input" placeholder="Ask your Health Assistant about your personalized diet, exercise, or records..." class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500" onkeydown="if(event.key === 'Enter') sendMessage()">
+                            <button onclick="sendMessage()" class="btn-primary py-3 px-6 rounded-lg font-semibold flex items-center">
+                                ${getIcon('send', 20)}
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+                
+                <div class="mt-8">
+                    <h3 class="font-bold text-xl mb-4 text-gray-800 flex items-center">
+                        ${getIcon('monitor', 20, 'mr-2 text-indigo-600')} PC Exercise & Body Tracking Mode
+                    </h3>
+                    <div class="card p-6 grid md:grid-cols-3 gap-6"> 
+                        <div class="md:col-span-2">
+                            <div class="video-placeholder">
+                                <span class="flex items-center">
+                                    ${getIcon('webcam', 24, 'mr-2')} Live PC Camera Feed & Form Analysis
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-3">
+                                Real-time feedback on your exercise technique (e.g., squats, push-ups) using your PC camera to prevent injuries and optimize growth.
+                            </p>
+                        </div>
+                        <div class="md:col-span-1 space-y-3">
+                            <button class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition flex items-center justify-center">
+                                ${getIcon('run', 20, 'mr-2')} Start Personalized Workout
+                            </button>
+                            <button class="w-full bg-yellow-100 text-yellow-700 py-3 rounded-lg font-semibold hover:bg-yellow-200 transition flex items-center justify-center">
+                                ${getIcon('refresh-cw', 20, 'mr-2')} Guided Warm-up & Stretching
+                            </button>
+                            <button class="w-full bg-gray-100 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-200 transition flex items-center justify-center">
+                                ${getIcon('history', 20, 'mr-2')} View Exercise History
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8">
+                    <h3 class="font-bold text-xl mb-4 text-gray-800 flex items-center">
+                        ${getIcon('gauge', 20, 'mr-2 text-gray-600')} Health Compliance & Hygiene Score
+                    </h3>
+                    <div class="card p-6 flex flex-col sm:flex-row justify-between items-center sm:items-start"> 
+                        <div class="mb-4 sm:mb-0">
+                            <p class="text-5xl font-extrabold text-emerald-600">88%</p>
+                            <p class="text-gray-500">Overall Daily Compliance Score</p>
+                        </div>
+                        <div class="text-left sm:text-right w-full sm:w-auto">
+                            <p class="font-semibold text-lg text-red-600">Action Needed:</p>
+                            <p class="text-gray-600 text-sm">You missed your 4 PM water intake reminder and your post-dinner hygiene check.</p>
+                            <button class="mt-2 text-sm bg-red-100 text-red-700 py-1 px-3 rounded-full hover:bg-red-200">View Action Plan</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+             // Initialize chat history and render
+            renderChatWindow();
+            // Scroll to bottom
+            const chatWindow = document.getElementById('ai-chat-window');
+            if (chatWindow) chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        // 2. Doctor Portal (Mobile-Optimized)
+        function renderDoctorPortal() {
+            portalContainer.innerHTML = `
+                <div class="card portal-header mb-8">
+                    <h2 class="text-3xl font-bold text-gray-800 flex items-center">
+                        ${getIcon('stethoscope', 28, 'mr-3 text-blue-600')} Doctor Portal: Enhanced Community Care
+                    </h2>
+                    <p class="text-gray-500 mt-2">Access aggregated health data, manage regional alerts, and communicate directly with consenting patients.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="space-y-6 lg:col-span-2">
+                        <div class="card border-l-4 border-red-500">
+                            <h3 class="font-bold text-xl mb-4 flex items-center text-red-600">
+                                ${getIcon('alert-triangle', 20, 'mr-2')} Regional Disease & Trend Analysis
+                            </h3>
+                            <div class="space-y-4">
+                                <div class="p-4 bg-red-50 border-l-4 border-red-500 rounded-md">
+                                    <p class="font-medium text-red-800">Alert: Dengue Cases Rising (Region: North Sector 3)</p>
+                                    <p class="text-sm text-red-600">7 new confirmed cases reported this week. System suggests immediate public SMS/App broadcast.</p>
+                                    <button class="mt-2 text-sm text-blue-600 hover:underline">Forward to Admin for Broadcast Approval</button>
+                                </div>
+                                <div class="p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded-md">
+                                    <p class="font-medium text-yellow-800">Trend: Low Water Intake (Region: West District)</p>
+                                    <p class="text-sm text-yellow-600">AI detection shows 30% lower average water intake. Suggesting a proactive hydration awareness campaign.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card border-l-4 border-blue-500">
+                            <h3 class="font-bold text-xl mb-4 flex items-center text-blue-600">
+                                ${getIcon('message-square', 20, 'mr-2')} Direct Patient Communication (PLL/Consent)
+                            </h3>
+                            <p class="text-sm text-gray-600 mb-3">Send personalized or templated health messages to patients who have granted access.</p>
+                            <input type="text" placeholder="Search by Patient User ID or Group" class="w-full p-2 border border-gray-300 rounded-lg mb-3 focus:ring-blue-500 focus:border-blue-500">
+                            <textarea rows="3" placeholder="Draft message for patient..." class="w-full p-2 border border-gray-300 rounded-lg mb-3 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                            <button class="bg-blue-600 text-white w-full py-2 rounded-lg font-semibold hover:bg-blue-700 transition">
+                                Send Secure Message / SMS
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="font-bold text-xl mb-4 flex items-center text-emerald-600">
+                            ${getIcon('file-text', 20, 'mr-2')} EkaCARE & Historical Records
+                        </h3>
+                        <p class="text-sm text-gray-500 mb-4">View granular health data, past records, and compliance scores for individual patients.</p>
+                        <input type="text" placeholder="Enter Patient User ID (e.g., U-B7F9D2)" class="w-full p-2 border border-gray-300 rounded-lg mb-4 focus:ring-emerald-500 focus:border-emerald-500">
+                        <button class="bg-emerald-600 text-white w-full py-2 rounded-lg font-semibold hover:bg-emerald-700 transition">
+                            Load Patient Data & Trends
+                        </button>
+                        <ul class="mt-4 space-y-2 text-sm text-gray-700 border-t pt-4">
+                            <li class="flex justify-between"><span>Last Sync:</span> <span class="font-mono">2025-10-02</span></li>
+                            <li class="flex justify-between"><span>7-Day Water Compliance:</span> <span class="font-bold text-green-600">95%</span></li>
+                            <li class="flex justify-between"><span>EkaCARE Consent Status:</span> <span class="font-bold text-blue-600">Active</span></li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+        }
+
+
+        // --- Router Implementation ---
+        function navigate(view) {
+            window.location.hash = view;
+            switch (view) {
+                case 'doctor':
+                    renderDoctorPortal();
+                    break;
+                case 'consumer':
+                default:
+                    renderConsumerPortal();
+                    break;
+            }
+            // Re-render Lucide icons after content injection
+            lucide.createIcons();
+        }
+
+        // Initialize view based on hash or default to consumer
+        window.onload = function() {
+            const initialView = window.location.hash.replace('#', '') || 'consumer';
+            navigate(initialView);
+        };
+        window.onhashchange = function() {
+            const hash = window.location.hash.replace('#', '');
+            navigate(hash);
+        };
+    </script>
+</body>
+</html>
